@@ -15,6 +15,9 @@ import { cn } from "@/lib/utils";
 
 const inter = Inter({ subsets: ["latin"] });
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'AppShade - Gestion de tickets',
   description: 'Plateforme de gestion de tickets de support',
