@@ -5,6 +5,9 @@ import logger from "@/lib/logger";
 
 const prisma = new PrismaClient();
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 // GET /api/user/profile - Récupérer le profil de l'utilisateur connecté
 export async function GET(request: NextRequest) {
   try {
@@ -48,16 +51,9 @@ export async function PUT(request: NextRequest) {
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        company: data.company,
-        position: data.position,
-        phoneNumber: data.phoneNumber,
-        address: data.address,
-        city: data.city,
-        postalCode: data.postalCode,
-        country: data.country,
-        profileCompleted: true, // Marquer le profil comme complété
+        firstName: data.firstName ?? undefined,
+        lastName: data.lastName ?? undefined,
+        role: "client",
         updatedAt: new Date(),
       },
     });
