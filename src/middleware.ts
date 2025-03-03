@@ -14,6 +14,8 @@ export default authMiddleware({
     "/cookies(.*)",
     "/contact",
     "/pricing",
+    "/features",
+    "/privacy"
   ],
   // Routes that can always be accessed, and have
   // no authentication information
