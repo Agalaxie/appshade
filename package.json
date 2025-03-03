@@ -1,7 +1,7 @@
 {
   "name": "appshade",
   "version": "1.0.0",
-  "description": "Système de gestion de tickets pour le support technique",
+  "description": "Système de gestion de tickets pour le support technique - v1",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
