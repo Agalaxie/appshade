@@ -41,7 +41,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider localization={frFR}>
+    <ClerkProvider 
+      localization={frFR}
+      appearance={{
+        baseTheme: undefined,
+        variables: { colorPrimary: 'rgb(var(--primary))' },
+      }}
+      navigate={(to) => {
+        window.location.href = to;
+      }}
+    >
       <html lang="fr" suppressHydrationWarning>
         <head>
           <link rel="icon" href="/favicon.ico" sizes="any" />
