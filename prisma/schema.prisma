@@ -1,0 +1,137 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id              String       @id @default(cuid())
+  email           String       @unique
+  firstName       String?
+  lastName        String?
+  role            String       @default("user")
+  company         String?
+  position        String?
+  phoneNumber     String?
+  address         String?
+  city            String?
+  postalCode      String?
+  country         String?
+  profileCompleted Boolean     @default(false)
+  tickets         Ticket[]
+  messages        Message[]
+  reactions       MessageReaction[]
+  payments        Payment[]
+  subscriptions   Subscription[]
+  attachments     Attachment[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model Ticket {
+  id              String       @id @default(cuid())
+  title           String
+  description     String
+  status          String       @default("open")
+  priority        String       @default("medium")
+  category        String       @default("general")
+  ftpHost         String?
+  ftpPort         String?
+  ftpUsername     String?
+  ftpPassword     String?
+  cmsType         String?
+  cmsUrl          String?
+  cmsUsername     String?
+  cmsPassword     String?
+  hostingProvider String?
+  hostingPlan     String?
+  userId          String
+  user            User         @relation(fields: [userId], references: [id])
+  messages        Message[]
+  attachments     Attachment[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  content    String
+  isInternal Boolean  @default(false)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  ticketId   String
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  reactions  MessageReaction[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model MessageReaction {
+  id        String   @id @default(cuid())
+  emoji     String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([messageId])
+  @@index([userId])
+}
+
+model Payment {
+  id             String   @id @default(cuid())
+  orderId        String   @unique
+  payerId        String?
+  amount         Float
+  currency       String   @default("EUR")
+  status         String
+  description    String?
+  email          String?
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+  @@index([subscriptionId])
+}
+
+model Subscription {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  status      String    @default("active")
+  planId      String
+  planName    String
+  startDate   DateTime  @default(now())
+  endDate     DateTime?
+  paidUntil   DateTime?
+  payments    Payment[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  fileName  String
+  fileType  String
+  fileSize  Int
+  filePath  String
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ticketId])
+  @@index([userId])
+} 

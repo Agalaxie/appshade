@@ -1,0 +1,295 @@
+"use client"
+
+import React, { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { ClientSidebar } from "@/components/client-sidebar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { AlertCircle, ArrowLeft, Clock, Send, Trash2 } from "lucide-react";
+import { useApi, useMutation } from "@/hooks/use-api";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import Link from "next/link";
+
+// Fonction pour formater la date
+function formatDate(dateString: string) {
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+// Fonction pour obtenir la couleur du badge de statut
+function getStatusBadge(status: string) {
+  switch (status) {
+    case "open":
+      return <Badge variant="default">Ouvert</Badge>;
+    case "in_progress":
+      return <Badge variant="secondary">En cours</Badge>;
+    case "resolved":
+      return <Badge variant="success">Résolu</Badge>;
+    case "closed":
+      return <Badge variant="outline">Fermé</Badge>;
+    default:
+      return <Badge variant="outline">{status}</Badge>;
+  }
+}
+
+// Fonction pour obtenir la couleur du badge de priorité
+function getPriorityBadge(priority: string) {
+  switch (priority) {
+    case "low":
+      return <Badge variant="outline">Basse</Badge>;
+    case "medium":
+      return <Badge variant="secondary">Moyenne</Badge>;
+    case "high":
+      return <Badge variant="warning">Haute</Badge>;
+    case "urgent":
+      return <Badge variant="destructive">Urgente</Badge>;
+    default:
+      return <Badge variant="outline">{priority}</Badge>;
+  }
+}
+
+export default function TicketDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const ticketId = params.id as string;
+  const [newMessage, setNewMessage] = useState("");
+
+  // Récupérer les détails du ticket
+  const {
+    data: ticket,
+    loading,
+    error,
+    refetch,
+  } = useApi(`/api/tickets/${ticketId}`);
+
+  // Vérifier si le ticket est temporaire
+  const isTemporaryTicket = ticket && (ticket.id.startsWith('temp-') || ticket.id.startsWith('error-'));
+
+  // Mutation pour ajouter un message
+  const { mutate: addMessage, loading: sendingMessage } = useMutation(
+    `/api/tickets/${ticketId}/messages`
+  );
+
+  // Mutation pour supprimer le ticket
+  const { mutate: deleteTicket, loading: deletingTicket } = useMutation(
+    `/api/tickets/${ticketId}`,
+    "DELETE"
+  );
+
+  // Gérer l'envoi d'un nouveau message
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!newMessage.trim()) {
+      toast.error("Le message ne peut pas être vide");
+      return;
+    }
+
+    try {
+      await addMessage({ content: newMessage });
+      setNewMessage("");
+      refetch();
+      toast.success("Message envoyé avec succès");
+    } catch (err) {
+      toast.error("Erreur lors de l'envoi du message");
+    }
+  };
+
+  // Gérer la suppression du ticket
+  const handleDeleteTicket = async () => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce ticket ?")) {
+      return;
+    }
+
+    try {
+      await deleteTicket();
+      toast.success("Ticket supprimé avec succès");
+      router.push("/client/tickets");
+    } catch (err) {
+      toast.error("Erreur lors de la suppression du ticket");
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen">
+      <ClientSidebar />
+      <div className="flex-1 p-6">
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/client/tickets">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Retour
+              </Link>
+            </Button>
+            <h1 className="text-2xl font-bold">Détails du ticket</h1>
+          </div>
+          {!isTemporaryTicket && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDeleteTicket}
+              disabled={deletingTicket || loading}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Supprimer
+            </Button>
+          )}
+        </div>
+
+        {loading ? (
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-8 w-3/4" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        ) : error ? (
+          <div className="rounded-md bg-destructive/15 p-4 text-destructive">
+            <div className="flex items-center">
+              <AlertCircle className="mr-2 h-4 w-4" />
+              <p>Erreur: {error}</p>
+            </div>
+            <Button variant="outline" size="sm" className="mt-2" onClick={() => refetch()}>
+              Réessayer
+            </Button>
+          </div>
+        ) : ticket ? (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>{ticket.title}</CardTitle>
+                {isTemporaryTicket && (
+                  <div className="mt-2 flex items-center text-sm text-amber-600">
+                    <Clock className="mr-1 h-4 w-4" />
+                    Ce ticket est en cours de traitement. Certaines fonctionnalités peuvent être limitées.
+                  </div>
+                )}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {getStatusBadge(ticket.status)}
+                  {getPriorityBadge(ticket.priority)}
+                  {ticket.category && <Badge variant="outline">{ticket.category}</Badge>}
+                  {isTemporaryTicket && (
+                    <Badge variant="outline" className="bg-yellow-100">En traitement</Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="mb-1 text-sm font-medium">Description</h3>
+                    <p className="text-sm text-muted-foreground">{ticket.description}</p>
+                  </div>
+                  <div className="flex flex-wrap justify-between gap-4 text-sm text-muted-foreground">
+                    <div>
+                      <span className="font-medium">Créé le:</span> {formatDate(ticket.createdAt)}
+                    </div>
+                    <div>
+                      <span className="font-medium">Dernière mise à jour:</span>{" "}
+                      {formatDate(ticket.updatedAt)}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {!isTemporaryTicket && (
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold">Messages</h2>
+
+                {ticket.messages && ticket.messages.length > 0 ? (
+                  <div className="space-y-4">
+                    {ticket.messages.map((message: any) => (
+                      <Card key={message.id}>
+                        <CardContent className="p-4">
+                          <div className="mb-2 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">
+                                {message.user?.firstName} {message.user?.lastName}
+                              </span>
+                              {message.user?.role === "admin" && (
+                                <Badge variant="secondary">Support</Badge>
+                              )}
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              {formatDate(message.createdAt)}
+                            </span>
+                          </div>
+                          <p className="text-sm">{message.content}</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <Card>
+                    <CardContent className="p-4 text-center text-muted-foreground">
+                      Aucun message pour ce ticket.
+                    </CardContent>
+                  </Card>
+                )}
+
+                <Card>
+                  <form onSubmit={handleSendMessage}>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Répondre</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Textarea
+                        placeholder="Écrivez votre message ici..."
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        rows={4}
+                        className="resize-none"
+                      />
+                    </CardContent>
+                    <CardFooter className="flex justify-end">
+                      <Button type="submit" disabled={sendingMessage || !newMessage.trim()}>
+                        {sendingMessage ? (
+                          "Envoi en cours..."
+                        ) : (
+                          <>
+                            <Send className="mr-2 h-4 w-4" />
+                            Envoyer
+                          </>
+                        )}
+                      </Button>
+                    </CardFooter>
+                  </form>
+                </Card>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-md border border-dashed p-8 text-center">
+            <h3 className="mb-2 text-lg font-medium">Ticket non trouvé</h3>
+            <p className="mb-4 text-sm text-muted-foreground">
+              Le ticket que vous recherchez n'existe pas ou a été supprimé.
+            </p>
+            <Button asChild>
+              <Link href="/client/tickets">
+                Retour à la liste des tickets
+              </Link>
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+} 

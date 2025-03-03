@@ -1,0 +1,52 @@
+{
+  "version": 3,
+  "middleware": {
+    "/": {
+      "files": [
+        "server/edge-runtime-webpack.js",
+        "server/src/middleware.js"
+      ],
+      "name": "src/middleware",
+      "page": "/",
+      "matchers": [
+        {
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/((?!.+\\.[\\w]+$|_next).*))(.json)?[\\/#\\?]?$",
+          "originalSource": "/((?!.+\\.[\\w]+$|_next).*)"
+        },
+        {
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/(\\/?index|\\/?index\\.json))?[\\/#\\?]?$",
+          "originalSource": "/"
+        },
+        {
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/(api|trpc))(.*)(.json)?[\\/#\\?]?$",
+          "originalSource": "/(api|trpc)(.*)"
+        },
+        {
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?\\/api\\/tickets(.*)(.json)?[\\/#\\?]?$",
+          "originalSource": "/api/tickets(.*)"
+        },
+        {
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?\\/api\\/tickets\\/\\[id\\](.*)(.json)?[\\/#\\?]?$",
+          "originalSource": "/api/tickets/[id](.*)"
+        },
+        {
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?\\/api\\/sync-user(.*)(.json)?[\\/#\\?]?$",
+          "originalSource": "/api/sync-user(.*)"
+        }
+      ],
+      "wasm": [],
+      "assets": [],
+      "env": {
+        "__NEXT_BUILD_ID": "3owf47Rrigo1xf89620rD",
+        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "5RicT3yFWhLiEgweEHSh7JTRV240ayIzDJB4FXFaSX0=",
+        "__NEXT_PREVIEW_MODE_ID": "c9c6c464028d14280a134a96dffe6141",
+        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "b90ff045e7c1a63a7650e5a33bb98a052588c291454cfe4afeb8074af24e6639",
+        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "5387c7b668070691d387e0a15354efe78f70fbefda6589a9121e4bc0f28a593b"
+      }
+    }
+  },
+  "functions": {},
+  "sortedMiddleware": [
+    "/"
+  ]
+}
